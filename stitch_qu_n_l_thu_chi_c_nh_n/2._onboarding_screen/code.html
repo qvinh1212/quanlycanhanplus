@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Onboarding - Quản lý chi tiêu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "on-primary-container": "#b7c5ff",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#3357bf",
+                        "on-tertiary-fixed": "#2a1700",
+                        "primary-fixed-dim": "#b5c4ff",
+                        "surface-container-high": "#dce9ff",
+                        "secondary": "#006c49",
+                        "outline-variant": "#c4c5d5",
+                        "secondary-fixed": "#6ffbbe",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-container": "#00714d",
+                        "on-primary-fixed-variant": "#113da6",
+                        "tertiary-fixed": "#ffddb8",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-container": "#e5eeff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "primary": "#003297",
+                        "tertiary": "#563400",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "secondary-container": "#6cf8bb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#ffb960",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-secondary-fixed-variant": "#005236",
+                        "primary-fixed": "#dce1ff",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#0b1c30",
+                        "on-background": "#0b1c30",
+                        "surface-dim": "#cbdbf5",
+                        "inverse-surface": "#213145",
+                        "surface-container-highest": "#d3e4fe",
+                        "background": "#f8f9ff",
+                        "on-surface-variant": "#444653",
+                        "inverse-primary": "#b5c4ff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#00164e",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "primary-container": "#254bb3",
+                        "tertiary-container": "#764900",
+                        "on-error": "#ffffff",
+                        "outline": "#747684"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "stack-md": "16px",
+                        "unit": "4px",
+                        "tap-target-min": "48px",
+                        "stack-lg": "24px",
+                        "container-padding": "20px"
+                    },
+                    fontFamily: {
+                        "body-sm": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "h2": ["Manrope"],
+                        "currency-display": ["Manrope"],
+                        "h3": ["Manrope"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "h1": ["Manrope"]
+                    },
+                    fontSize: {
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "currency-display": ["36px", {"lineHeight": "44px", "fontWeight": "800"}],
+                        "h3": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "h1": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col justify-between overflow-hidden relative">
+<!-- Ambient background blobs -->
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+<div class="absolute -top-32 -left-32 w-96 h-96 bg-primary-fixed rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+<div class="absolute top-1/4 -right-32 w-80 h-80 bg-secondary-container rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+<div class="absolute -bottom-32 left-1/4 w-96 h-96 bg-surface-variant rounded-full mix-blend-multiply filter blur-3xl opacity-80"></div>
+</div>
+<!-- Header Actions -->
+<header class="flex justify-end p-container-padding z-10 pt-8">
+<button class="font-label-md text-label-md text-primary px-4 py-2 hover:bg-surface-container rounded-full transition-colors">
+            Bỏ qua
+        </button>
+</header>
+<!-- Main Content Canvas - Carousel simulated -->
+<main class="flex-grow flex flex-col justify-center items-center px-container-padding z-10 pb-8">
+<!-- Illustration Area - Step 1: Ghi chép nhanh -->
+<div class="relative w-full max-w-sm mb-stack-lg flex justify-center items-center aspect-square">
+<img alt="Illustration of quick transaction recording" class="w-full h-full object-cover rounded-3xl shadow-[0_10px_30px_0px_rgba(37,75,179,0.08)]" data-alt="Minimalist abstract 3D illustration of a floating receipt, coins, and a green plus sign in soft pastel blue and green colors against a clean light background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQGaXo_2VQleGdDyDnHwP77dlVRJCD9RU9Xsu6nufKH3VL42nh1bVWFZkHzvR1caOpD4rVtPKO1COIyviKIChwoySiWCjIeJ59bsCbC-6CyV7t1KH4lVFRROEztx34G-7OfWsZHqv5QdfP1PTMAbmh6QSRFbpLDGKskMQaCl3WMNBXf60VaeTz4hh1eMX3xCXCuGjlFp4C7mAg6LdaHbFNaecKHJb2avz9MMT4DAP3Kr6L9yx6oh1mMafOeW69LjhiOLjRBJzBrYs"/>
+<!-- Decorative floating element -->
+<div class="absolute -bottom-4 right-8 bg-white p-4 rounded-2xl shadow-[0_10px_30px_0px_rgba(37,75,179,0.12)] border border-surface-container">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center max-w-sm w-full">
+<h1 class="font-h1 text-h1 text-primary mb-stack-sm">Ghi chép nhanh</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-stack-lg">
+                Chỉ mất vài giây để ghi lại mọi khoản thu chi. Không còn nỗi lo quên hay thiếu sót.
+            </p>
+</div>
+<!-- Pagination Indicators -->
+<div class="flex gap-2 justify-center mt-stack-md">
+<div class="w-8 h-2 rounded-full bg-primary transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim transition-all duration-300"></div>
+</div>
+</main>
+<!-- Bottom Actions -->
+<footer class="p-container-padding pb-safe mb-8 w-full max-w-sm mx-auto z-10">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md h-[56px] rounded-xl flex justify-center items-center gap-2 shadow-[0_4px_20px_0px_rgba(37,75,179,0.2)] hover:bg-surface-tint transition-colors">
+<span>Tiếp theo</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</footer>
+</body></html>
