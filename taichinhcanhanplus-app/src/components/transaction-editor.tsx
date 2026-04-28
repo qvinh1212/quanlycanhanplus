@@ -45,7 +45,7 @@ export function TransactionEditor({ transaction, categories, wallets }: Transact
 
     startTransition(async () => {
       try {
-        const response = await apiFetch(`/api/transactions/${transaction.id}`, {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(`/api/transactions/${transaction.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -59,8 +59,7 @@ export function TransactionEditor({ transaction, categories, wallets }: Transact
             tags: note ? note.split(/\s+/).filter((word) => word.startsWith("#")) : [],
           }),
         });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error?.message ?? "Không thể cập nhật.");
+        if (!result.success) throw new Error(result.error?.message ?? "Không thể cập nhật.");
         setStatus("success");
         setMessage("Đã cập nhật giao dịch và đồng bộ lại ngân sách.");
         router.refresh();
@@ -74,9 +73,8 @@ export function TransactionEditor({ transaction, categories, wallets }: Transact
   function handleDelete() {
     startTransition(async () => {
       try {
-        const response = await apiFetch(`/api/transactions/${transaction.id}`, { method: "DELETE" });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error?.message ?? "Không thể xóa.");
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(`/api/transactions/${transaction.id}`, { method: "DELETE" });
+        if (!result.success) throw new Error(result.error?.message ?? "Không thể xóa.");
         router.push("/transactions");
         router.refresh();
       } catch (error) {

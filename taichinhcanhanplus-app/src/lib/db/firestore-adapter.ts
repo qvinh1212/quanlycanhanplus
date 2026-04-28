@@ -463,11 +463,11 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
 
   async listTransactions(userId: string) {
     const snapshot = await userCollection(userId, "transactions")
-      .where("status", "!=", "cancelled")
-      .orderBy("status")
       .orderBy("occurredAt", "desc")
       .get();
-    return snapshot.docs.map((item) => hydrate<Transaction>(item.id, item.data()));
+    return snapshot.docs
+      .map((item) => hydrate<Transaction>(item.id, item.data()))
+      .filter((transaction) => transaction.status !== "cancelled");
   }
 
   async getTransaction(userId: string, transactionId: string) {

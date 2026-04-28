@@ -36,9 +36,8 @@ export function WalletManager({ initialWallets }: WalletManagerProps) {
   const selectedOption = walletOptions.find((option) => option.type === editingWallet?.type) ?? walletOptions[0];
 
   async function refreshWallets() {
-    const response = await apiFetch("/api/wallets", { cache: "no-store" });
-    const result = await response.json();
-    if (response.ok && result.success) setWallets(result.data);
+    const result = await apiFetch<{ success: boolean; data: Wallet[]; error?: { message?: string } }>("/api/wallets", { cache: "no-store" });
+    if (result.success) setWallets(result.data);
   }
 
   async function handleSubmit(formData: FormData) {
@@ -60,13 +59,12 @@ export function WalletManager({ initialWallets }: WalletManagerProps) {
 
     startTransition(async () => {
       try {
-        const response = await apiFetch(editingWallet ? `/api/wallets/${editingWallet.id}` : "/api/wallets", {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(editingWallet ? `/api/wallets/${editingWallet.id}` : "/api/wallets", {
           method: editingWallet ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, type, initialBalance, currency: "VND", color, icon }),
         });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error?.message ?? "Không thể lưu ví.");
+        if (!result.success) throw new Error(result.error?.message ?? "Không thể lưu ví.");
         await refreshWallets();
         setEditingWallet(null);
         setStatus("success");
@@ -82,9 +80,8 @@ export function WalletManager({ initialWallets }: WalletManagerProps) {
   function handleArchive(wallet: Wallet) {
     startTransition(async () => {
       try {
-        const response = await apiFetch(`/api/wallets/${wallet.id}`, { method: "DELETE" });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error?.message ?? "Không thể lưu trữ ví.");
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(`/api/wallets/${wallet.id}`, { method: "DELETE" });
+        if (!result.success) throw new Error(result.error?.message ?? "Không thể lưu trữ ví.");
         await refreshWallets();
         if (editingWallet?.id === wallet.id) setEditingWallet(null);
         setStatus("success");

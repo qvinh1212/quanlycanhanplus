@@ -68,14 +68,13 @@ export function BudgetManager({ budgets, categories, wallets }: BudgetManagerPro
 
     startTransition(async () => {
       try {
-        const response = await apiFetch(editingBudget ? `/api/budgets/${editingBudget.id}` : "/api/budgets", {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(editingBudget ? `/api/budgets/${editingBudget.id}` : "/api/budgets", {
           method: editingBudget ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const result = await response.json();
 
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.error?.message ?? "Không thể lưu ngân sách.");
         }
 
@@ -93,10 +92,9 @@ export function BudgetManager({ budgets, categories, wallets }: BudgetManagerPro
   function archiveBudget(budget: Budget) {
     startTransition(async () => {
       try {
-        const response = await apiFetch(`/api/budgets/${budget.id}`, { method: "DELETE" });
-        const result = await response.json();
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(`/api/budgets/${budget.id}`, { method: "DELETE" });
 
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.error?.message ?? "Không thể xóa ngân sách.");
         }
 
@@ -115,14 +113,13 @@ export function BudgetManager({ budgets, categories, wallets }: BudgetManagerPro
     startTransition(async () => {
       const nextStatus = budget.status === "active" ? "paused" : "active";
       try {
-        const response = await apiFetch(`/api/budgets/${budget.id}`, {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>(`/api/budgets/${budget.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: nextStatus }),
         });
-        const result = await response.json();
 
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.error?.message ?? "Không thể đổi trạng thái ngân sách.");
         }
 

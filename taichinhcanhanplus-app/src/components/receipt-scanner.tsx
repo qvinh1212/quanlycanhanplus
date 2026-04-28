@@ -54,7 +54,7 @@ export function ReceiptScanner({ categories, wallets }: ReceiptScannerProps) {
 
     startTransition(async () => {
       try {
-        const response = await apiFetch("/api/transactions", {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>("/api/transactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -68,8 +68,7 @@ export function ReceiptScanner({ categories, wallets }: ReceiptScannerProps) {
             tags: ["receipt", "ocr-demo"],
           }),
         });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error?.message ?? "Không thể lưu giao dịch.");
+        if (!result.success) throw new Error(result.error?.message ?? "Không thể lưu giao dịch.");
 
         setStatus("success");
         setMessage("Đã lưu hóa đơn thành giao dịch chi tiêu. Đang quay về Dashboard...");

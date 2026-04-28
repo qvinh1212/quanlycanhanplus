@@ -46,7 +46,7 @@ export function AddTransactionForm({ categories, wallets, initialType = "expense
 
     startTransition(async () => {
       try {
-        const response = await apiFetch("/api/transactions", {
+        const result = await apiFetch<{ success: boolean; error?: { message?: string } }>("/api/transactions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -63,9 +63,7 @@ export function AddTransactionForm({ categories, wallets, initialType = "expense
           }),
         });
 
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.error?.message ?? "Không thể lưu giao dịch.");
         }
 
