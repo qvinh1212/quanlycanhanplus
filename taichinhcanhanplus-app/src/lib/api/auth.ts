@@ -1,5 +1,5 @@
-import { firestoreFinanceDataAdapter } from "@/lib/db/firestore-adapter";
 import { getFirebaseAdminAuth } from "@/lib/firebase/admin";
+import type { UserProfile } from "@/lib/types";
 
 function getBearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
@@ -7,7 +7,7 @@ function getBearerToken(request: Request) {
   return authorization.slice("Bearer ".length).trim();
 }
 
-export async function getAuthenticatedUser(request: Request) {
+export async function getAuthenticatedUser(request: Request): Promise<UserProfile> {
   const token = getBearerToken(request);
   if (!token) {
     throw new Error("UNAUTHENTICATED");
@@ -15,14 +15,18 @@ export async function getAuthenticatedUser(request: Request) {
 
   const decodedToken = await getFirebaseAdminAuth().verifyIdToken(token);
   const userRecord = await getFirebaseAdminAuth().getUser(decodedToken.uid);
-  const profile = await firestoreFinanceDataAdapter.ensureUserProfile({
+
+  return {
     id: decodedToken.uid,
     email: userRecord.email ?? decodedToken.email ?? "",
     displayName: userRecord.displayName ?? decodedToken.name ?? decodedToken.email?.split("@").at(0) ?? "Người dùng",
-  });
-
-  await firestoreFinanceDataAdapter.seedUserWorkspaceIfEmpty(decodedToken.uid);
-  return profile;
+    defaultCurrency: "VND",
+    locale: "vi-VN",
+    timezone: "Asia/Ho_Chi_Minh",
+    status: userRecord.disabled ? "disabled" : "active",
+    createdAt: userRecord.metadata.creationTime ? new Date(userRecord.metadata.creationTime) : new Date(),
+    updatedAt: new Date(),
+  };
 }
 
 export function isAuthError(error: unknown) {

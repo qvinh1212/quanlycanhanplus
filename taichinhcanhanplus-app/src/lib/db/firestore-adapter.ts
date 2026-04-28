@@ -1,20 +1,5 @@
-import {
-  Timestamp,
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  writeBatch,
-  type DocumentData,
-} from "firebase/firestore";
-import { getFirebaseDb } from "@/lib/firebase/client";
+import { FieldValue, Timestamp, type DocumentData } from "firebase-admin/firestore";
+import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 import type { FinanceDataAdapter } from "@/lib/db/adapter";
 import type {
   Budget,
@@ -52,11 +37,15 @@ const DEFAULT_WALLET_IDS = {
 } as const;
 
 function userDoc(userId: string) {
-  return doc(getFirebaseDb(), "users", userId);
+  return getFirebaseAdminDb().collection("users").doc(userId);
 }
 
 function userCollection(userId: string, name: string) {
-  return collection(userDoc(userId), name);
+  return userDoc(userId).collection(name);
+}
+
+function serverTimestamp() {
+  return FieldValue.serverTimestamp();
 }
 
 function toDate(value: unknown): Date {
@@ -87,7 +76,7 @@ async function listCollection<T extends { createdAt: Date; updatedAt: Date }>(
   name: string,
   orderField = "createdAt",
 ) {
-  const snapshot = await getDocs(query(userCollection(userId, name), orderBy(orderField, "desc")));
+  const snapshot = await userCollection(userId, name).orderBy(orderField, "desc").get();
   return snapshot.docs.map((item) => hydrate<T>(item.id, item.data()));
 }
 
@@ -221,8 +210,8 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
 
   async ensureUserProfile(user: Pick<UserProfile, "id" | "email" | "displayName">) {
     const ref = userDoc(user.id);
-    const snapshot = await getDoc(ref);
-    if (snapshot.exists()) return hydrate<UserProfile>(snapshot.id, snapshot.data());
+    const snapshot = await ref.get();
+    if (snapshot.exists) return hydrate<UserProfile>(snapshot.id, snapshot.data() ?? {});
 
     const profile = {
       email: user.email,
@@ -235,13 +224,13 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
       updatedAt: serverTimestamp(),
     };
 
-    await setDoc(ref, profile);
-    const nextSnapshot = await getDoc(ref);
+    await ref.set(profile);
+    const nextSnapshot = await ref.get();
     return hydrate<UserProfile>(nextSnapshot.id, nextSnapshot.data() ?? profile);
   }
 
   async seedUserWorkspaceIfEmpty(userId: string) {
-    const existingWallets = await getDocs(query(userCollection(userId, "wallets"), orderBy("createdAt", "desc")));
+    const existingWallets = await userCollection(userId, "wallets").orderBy("createdAt", "desc").get();
     if (!existingWallets.empty) return false;
 
     const now = serverTimestamp();
@@ -250,7 +239,7 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const batch = writeBatch(getFirebaseDb());
+    const batch = getFirebaseAdminDb().batch();
 
     const wallets = [
       {
@@ -368,13 +357,13 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
     ];
 
     wallets.forEach((wallet) => {
-      batch.set(doc(userCollection(userId, "wallets"), wallet.id), wallet.data);
+      batch.set(userCollection(userId, "wallets").doc(wallet.id), wallet.data);
     });
     categories.forEach((category) => {
-      batch.set(doc(userCollection(userId, "categories"), category.id), category.data);
+      batch.set(userCollection(userId, "categories").doc(category.id), category.data);
     });
     transactions.forEach((transaction) => {
-      batch.set(doc(userCollection(userId, "transactions")), {
+      batch.set(userCollection(userId, "transactions").doc(), {
         ...transaction,
         userId,
         currency: DEFAULT_CURRENCY,
@@ -383,7 +372,7 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
         updatedAt: now,
       });
     });
-    batch.set(doc(userCollection(userId, "budgets"), "budget-food-monthly"), {
+    batch.set(userCollection(userId, "budgets").doc("budget-food-monthly"), {
       userId,
       name: "Ăn uống tháng này",
       categoryId: DEFAULT_CATEGORY_IDS.food,
@@ -429,9 +418,9 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
   }
 
   async getWallet(userId: string, walletId: string) {
-    const snapshot = await getDoc(doc(userCollection(userId, "wallets"), walletId));
-    if (!snapshot.exists()) return null;
-    const wallet = hydrate<Wallet>(snapshot.id, snapshot.data());
+    const snapshot = await userCollection(userId, "wallets").doc(walletId).get();
+    if (!snapshot.exists) return null;
+    const wallet = hydrate<Wallet>(snapshot.id, snapshot.data() ?? {});
     if (wallet.isArchived) return null;
     const [withBalance] = computeWalletsWithBalances([wallet], await this.listTransactions(userId));
     return withBalance;
@@ -451,15 +440,16 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
       createdAt: now,
       updatedAt: now,
     };
-    const ref = await addDoc(userCollection(userId, "wallets"), payload);
+    const ref = userCollection(userId, "wallets").doc();
+    await ref.set(payload);
     return hydrate<Wallet>(ref.id, { ...payload, createdAt: new Date(), updatedAt: new Date() });
   }
 
   async updateWallet(userId: string, walletId: string, input: UpdateWalletInput) {
-    const ref = doc(userCollection(userId, "wallets"), walletId);
-    const snapshot = await getDoc(ref);
-    if (!snapshot.exists()) return null;
-    await updateDoc(ref, withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
+    const ref = userCollection(userId, "wallets").doc(walletId);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return null;
+    await ref.update(withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
     return this.getWallet(userId, walletId);
   }
 
@@ -472,16 +462,18 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
   }
 
   async listTransactions(userId: string) {
-    const snapshot = await getDocs(
-      query(userCollection(userId, "transactions"), where("status", "!=", "cancelled"), orderBy("status"), orderBy("occurredAt", "desc")),
-    );
+    const snapshot = await userCollection(userId, "transactions")
+      .where("status", "!=", "cancelled")
+      .orderBy("status")
+      .orderBy("occurredAt", "desc")
+      .get();
     return snapshot.docs.map((item) => hydrate<Transaction>(item.id, item.data()));
   }
 
   async getTransaction(userId: string, transactionId: string) {
-    const snapshot = await getDoc(doc(userCollection(userId, "transactions"), transactionId));
-    if (!snapshot.exists()) return null;
-    const transaction = hydrate<Transaction>(snapshot.id, snapshot.data());
+    const snapshot = await userCollection(userId, "transactions").doc(transactionId).get();
+    if (!snapshot.exists) return null;
+    const transaction = hydrate<Transaction>(snapshot.id, snapshot.data() ?? {});
     return transaction.status === "cancelled" ? null : transaction;
   }
 
@@ -497,15 +489,16 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
       createdAt: now,
       updatedAt: now,
     });
-    const ref = await addDoc(userCollection(userId, "transactions"), payload);
+    const ref = userCollection(userId, "transactions").doc();
+    await ref.set(payload);
     return hydrate<Transaction>(ref.id, { ...payload, createdAt: new Date(), updatedAt: new Date() });
   }
 
   async updateTransaction(userId: string, transactionId: string, input: UpdateTransactionInput) {
-    const ref = doc(userCollection(userId, "transactions"), transactionId);
-    const snapshot = await getDoc(ref);
-    if (!snapshot.exists()) return null;
-    await updateDoc(ref, withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
+    const ref = userCollection(userId, "transactions").doc(transactionId);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return null;
+    await ref.update(withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
     return this.getTransaction(userId, transactionId);
   }
 
@@ -521,9 +514,9 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
   }
 
   async getBudget(userId: string, budgetId: string) {
-    const snapshot = await getDoc(doc(userCollection(userId, "budgets"), budgetId));
-    if (!snapshot.exists()) return null;
-    const budget = hydrate<Budget>(snapshot.id, snapshot.data());
+    const snapshot = await userCollection(userId, "budgets").doc(budgetId).get();
+    if (!snapshot.exists) return null;
+    const budget = hydrate<Budget>(snapshot.id, snapshot.data() ?? {});
     if (budget.status === "archived") return null;
     return hydrateBudgetTracking(budget, await this.listTransactions(userId));
   }
@@ -540,15 +533,16 @@ export class FirestoreFinanceDataAdapter implements FinanceDataAdapter {
       createdAt: now,
       updatedAt: now,
     });
-    const ref = await addDoc(userCollection(userId, "budgets"), payload);
+    const ref = userCollection(userId, "budgets").doc();
+    await ref.set(payload);
     return hydrate<Budget>(ref.id, { ...payload, createdAt: new Date(), updatedAt: new Date() });
   }
 
   async updateBudget(userId: string, budgetId: string, input: UpdateBudgetInput) {
-    const ref = doc(userCollection(userId, "budgets"), budgetId);
-    const snapshot = await getDoc(ref);
-    if (!snapshot.exists()) return null;
-    await updateDoc(ref, withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
+    const ref = userCollection(userId, "budgets").doc(budgetId);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return null;
+    await ref.update(withoutUndefined({ ...input, updatedAt: serverTimestamp() }));
     return this.getBudget(userId, budgetId);
   }
 
